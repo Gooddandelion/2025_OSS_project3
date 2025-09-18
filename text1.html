@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script>
+        window.onload = function() {
+            var btn = document.getElementById("btn");
+            var del = document.getElementById("del");
+            var text = document.getElementById("text");
+            var result = document.getElementById("result");
+
+            btn.addEventListener("click", Click);
+            function Click() {
+                var value = text.value;
+                var sub = value.split(",");
+
+                sub.forEach(function (item) {
+                    let list = document.createElement("li");
+                    list.textContent = item.trim();
+                    result.appendChild(list);
+                })
+            };
+
+            del.addEventListener("click", function () {
+                result.innerHTML = ""; //전체 삭제
+            });
+        }
+
+    </script>
+
+    <style>
+        .box {
+            display: flex;
+        }
+
+        input {
+            background-color: aliceblue;
+            border-radius: 3px;
+            border-color: grey;
+        }
+
+        .btn {
+            background-color: blue;
+            color: white;
+            border: none;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        .del {
+            background-color: darkgreen;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Dynamic Web page</h1>
+    <div id="box" class="box">
+        <form>
+            <input type="text" name="text" id="text">
+        </form>
+        <button id="btn" class="btn"> 추가 </button>
+        <button id="del" class="del"> 삭제 </button>
+    </div>
+    <div>
+        <ul id="result">
+
+        </ul>
+    </div>
+
+</body>
+
+</html>
