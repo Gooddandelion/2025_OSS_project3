@@ -1,13 +1,15 @@
-
 <!doctype html>
 <html lang="ko">
+
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>N‑Mail | 보기</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="my.css">
   <script src="shared.js"></script>
 </head>
+
 <body>
   <div class="d-flex" style="min-height:100vh;">
     <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 260px;">
@@ -37,31 +39,44 @@
     seedIfEmpty();
     const id = getParam('id');
     const wrap = document.getElementById('wrap');
-    if(!isValidId(id)){
-      wrap.innerHTML = '<div>잘못된 접근입니다. <a class="link-primary" href="index.html">목록으로</a></div>';
-    } else {
-      const item = findById(id);
-      if(!item){ wrap.innerHTML = '<div>존재하지 않는 항목입니다. <a class="link-primary" href="index.html">목록으로</a></div>'; }
-      else{
-        document.getElementById('editLink').href = 'edit.html?id='+encodeURIComponent(id);
-        const labels = (item.labels||[]).map(lb=>`<span class="badge bg-light text-dark border me-1">${esc(lb)}</span>`).join('');
-        wrap.innerHTML = `
-          <div class="d-flex justify-content-between align-items-center">
-            <h4 class="m-0">${item.starred?'⭐ ':''}${esc(item.subject)}</h4>
-            <div class="text-muted">${formatKST(item.date)}</div>
-          </div>
-          <div class="text-muted my-2">보낸사람: <strong>${esc(item.from)}</strong> | 폴더: ${esc(item.folder)} ${item.hasAttachment?'| 📎':''}</div>
-          <div class="mb-2">${labels}</div>
-          <hr/>
-          <div class="lh-lg">${esc(item.snippet).replace(/\n/g,'<br>')}</div>
-        `;
-        // 읽음 처리
-        if(item.unread){ item.unread=false; upsert(item); }
-        document.getElementById('del').addEventListener('click', ()=>{
-          if(confirm('게시물을 삭제할까요?')){ moveToFolder(item.id,'휴지통'); location.href='index.html?folder=휴지통'; }
-        });
-      }
+    if (!isValidId(id)) {
+      const sample = {
+        id: 'sample-1',
+        from: '홍길동 <hong@test.com>',
+        subject: '샘플 메일 제목',
+        date: new Date().toISOString(),
+        folder: '받은편지함',
+        hasAttachment: true,
+        starred: true,
+        snippet: '이것은 샘플 메일 본문 내용입니다.\n줄바꿈도 테스트할 수 있습니다.'
+      };
+
+      wrap.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="m-0">${sample.starred ? '⭐ ' : ''}${esc(sample.subject)}</h4>
+      <div class="text-muted">${formatKST(sample.date)}</div>
+    </div>
+    <div class="text-muted my-2">
+      보낸사람: <strong>${esc(sample.from)}</strong> | 
+      폴더: ${esc(sample.folder)} ${sample.hasAttachment ? '| 📎' : ''}
+    </div>
+    <hr/>
+    <div class="lh-lg">${esc(sample.snippet).replace(/\\n/g, '<br>')}</div>
+  `;
+
+      document.getElementById('editLink').addEventListener('click', e => {
+        e.preventDefault();
+        location.href = 'edit.html?id=' + encodeURIComponent(sample.id);
+      });
+      document.getElementById('del').addEventListener('click', () => {
+        if (confirm('샘플 메일을 삭제할까요?')) {
+          alert("게시물이 삭제되었습니다");
+          location.href = 'index.html';
+        }
+      });
     }
+
   </script>
 </body>
+
 </html>
