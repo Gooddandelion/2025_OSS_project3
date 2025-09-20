@@ -1,0 +1,173 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>N‑Mail | 목록</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="my.css">
+  <script src="shared.js"></script>
+</head>
+<body>
+  <div class="d-flex" style="min-height:100vh;">
+    <!-- Sidebar (folders) -->
+    <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 260px;">
+      <div class="d-flex align-items-center mb-3 brand">
+        <p style="color: var(--nv); font-size: 30px; font-weight: bolder; padding-right: 5px;">N </p>
+        <p style="font-size: 20px; font-weight:lighter;"> 메일</p>
+      </div>
+      <a href="add.html" class="btn btn-success mb-3" style="background:var(--nv); border:0;">메일쓰기</a>
+      <ul class="nav nav-pills flex-column mb-auto" id="folderList">
+        <li class="nav-item"><a data-folder="받은편지함" href="index.html?folder=받은편지함" class="nav-link link-dark">받은편지함 <span class="count unread" data-c="받은편지함">0</span></a></li>
+        <li><a data-folder="중요" href="index.html?folder=중요" class="nav-link link-dark">중요 <span class="count" data-c="중요">0</span></a></li>
+        <li><a data-folder="보낸편지함" href="index.html?folder=보낸편지함" class="nav-link link-dark">보낸편지함 <span class="count" data-c="보낸편지함">0</span></a></li>
+        <li><a data-folder="임시보관" href="index.html?folder=임시보관" class="nav-link link-dark">임시보관 <span class="count" data-c="임시보관">0</span></a></li>
+        <li><a data-folder="스팸메일함" href="index.html?folder=스팸메일함" class="nav-link link-dark">스팸메일함 <span class="count" data-c="스팜메일함">0</span></a></li>
+        <li><a data-folder="휴지통" href="index.html?folder=휴지통" class="nav-link link-dark">휴지통 <span class="count" data-c="휴지통">0</span></a></li>
+      </ul>
+      <hr><small class="text-secondary">Front‑only demo</small>
+    </div>
+
+    <div class="b-example-divider b-example-vr"></div>
+
+    <!-- Content -->
+    <main class="flex-grow-1 p-3 container-fluid">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <select id="searchField" class="form-select" style="max-width:160px">
+            <option value="all">전체</option>
+            <option value="from">보낸사람</option>
+            <option value="subject">제목</option>
+            <option value="snippet">내용</option>
+          </select>
+          <input id="q" class="form-control" placeholder="메일 검색">
+        </div>
+        <select id="sort" class="form-select" style="max-width:160px">
+          <option value="date-desc">최신순</option>
+          <option value="date-asc">오래된순</option>
+          <option value="from-asc">보낸사람 A→Z</option>
+          <option value="subject-asc">제목 A→Z</option>
+        </select>
+        <div class="form-check ms-1"><input class="form-check-input" type="checkbox" id="onlyUnread"><label class="form-check-label ms-1" for="onlyUnread">안읽음</label></div>
+        <div class="form-check ms-1"><input class="form-check-input" type="checkbox" id="onlyStar"><label class="form-check-label ms-1" for="onlyStar">중요</label></div>
+        <div class="form-check ms-1"><input class="form-check-input" type="checkbox" id="onlyAttach"><label class="form-check-label ms-1" for="onlyAttach">첨부</label></div>
+        <button id="reset" class="btn btn-outline-secondary ms-auto">초기화</button>
+      </div>
+
+      <!-- List -->
+      <div class="nm-list">
+        <div class="nm-head">
+          <div><input type="checkbox" id="checkAll"></div>
+          <div>중요</div>
+          <div>보낸사람</div>
+          <div>제목 / 내용</div>
+          <div class="text-end">받은날짜</div>
+        </div>
+        <div id="list"></div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-2 text-muted">
+        <div id="rangeInfo">총 0개</div>
+        <div>
+          <button id="prev" class="btn btn-sm btn-outline-secondary">◀</button>
+          <span id="pageInfo">1/1</span>
+          <button id="next" class="btn btn-sm btn-outline-secondary">▶</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    seedIfEmpty();
+    const state = {
+      folder: getParam('folder')||'받은편지함', q:'', field:'all', sort:'date-desc', unread:false, star:false, attach:false, page:1, pageSize:12
+    };
+
+    const listEl = document.getElementById('list');
+    const rangeInfo = document.getElementById('rangeInfo');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+
+    function refreshFolderCounts(){
+      const mp = countUnreadByFolder();
+      document.querySelectorAll('[data-c]').forEach(el=>{
+        const k = el.getAttribute('data-c');
+        const n = mp[k]||0;
+        el.textContent = n;
+        el.classList.toggle('unread', n>0);
+      });
+      markActiveByPageOrFolder();
+    }
+
+    function apply(rows){
+      let r = rows.filter(m=>m.folder===state.folder);
+      const q = state.q.trim().toLowerCase();
+      if(q){
+        r = r.filter(m=>{
+          if(state.field==='from') return m.from.toLowerCase().includes(q);
+          if(state.field==='subject') return m.subject.toLowerCase().includes(q);
+          if(state.field==='snippet') return m.snippet.toLowerCase().includes(q);
+          return m.from.toLowerCase().includes(q)||m.subject.toLowerCase().includes(q)||m.snippet.toLowerCase().includes(q);
+        });
+      }
+      if(state.unread) r = r.filter(m=>m.unread);
+      if(state.star) r = r.filter(m=>m.starred);
+      if(state.attach) r = r.filter(m=>m.hasAttachment);
+      const [key,dir] = state.sort.split('-');
+      r.sort((a,b)=>{
+        let diff=0; if(key==='date') diff=new Date(b.date)-new Date(a.date); else if(key==='from') diff=a.from.localeCompare(b.from); else if(key==='subject') diff=a.subject.localeCompare(b.subject);
+        return dir==='asc' ? -diff : diff;
+      });
+      return r;
+    }
+
+    function render(){
+      refreshFolderCounts();
+      const rows = apply(loadData());
+      const total = rows.length; const start=(state.page-1)*state.pageSize; const pageRows=rows.slice(start,start+state.pageSize);
+      listEl.innerHTML='';
+      if(!pageRows.length){ listEl.innerHTML = '<div class="p-5 text-center text-muted">메일이 없습니다</div>'; }
+      pageRows.forEach(m=>{
+        const row = document.createElement('div'); row.className='nm-row'+(m.unread?' unread':''); row.dataset.id=m.id;
+        const col0 = document.createElement('div'); col0.innerHTML = `<input type="checkbox" class="rowchk" data-id="${m.id}">`;
+        const col1 = document.createElement('div'); col1.innerHTML = `<button class="star ${m.starred?'active':''}" data-star="${m.id}" aria-label="중요">★</button>`;
+        const col2 = document.createElement('div'); col2.className='nm-from'; col2.textContent = m.from;
+        const labels = (m.labels||[]).map(lb=>`<span class="badge-tag">${esc(lb)}</span>`).join('');
+        const attach = m.hasAttachment? ' 📎':'';
+        const col3 = document.createElement('div'); col3.className='nm-subject'; col3.innerHTML = `${labels}<a class="link-offset-1 link-underline-opacity-0" href="view.html?id=${encodeURIComponent(m.id)}">${esc(m.subject)}</a><span class="nm-snippet"> — ${esc(m.snippet)}</span>${attach}`;
+        const col4 = document.createElement('div'); col4.className='nm-date text-end'; col4.textContent = formatKST(m.date);
+        row.append(col0,col1,col2,col3,col4); listEl.append(row);
+      });
+      rangeInfo.textContent = `총 ${total}개 중 ${total? start+1:0}-${Math.min(start+state.pageSize,total)} 표시`;
+      const totalPages = Math.max(1, Math.ceil(total/state.pageSize));
+      pageInfo.textContent = `${state.page}/${totalPages}`;
+      prevBtn.disabled = state.page<=1; nextBtn.disabled = state.page>=totalPages;
+    }
+
+    // UI 이벤트
+    document.getElementById('q').addEventListener('input', e=>{ state.q=e.target.value; state.page=1; render(); });
+    document.getElementById('searchField').addEventListener('change', e=>{ state.field=e.target.value; state.page=1; render(); });
+    document.getElementById('sort').addEventListener('change', e=>{ state.sort=e.target.value; render(); });
+    document.getElementById('onlyUnread').addEventListener('change', e=>{ state.unread=e.target.checked; state.page=1; render(); });
+    document.getElementById('onlyStar').addEventListener('change', e=>{ state.star=e.target.checked; state.page=1; render(); });
+    document.getElementById('onlyAttach').addEventListener('change', e=>{ state.attach=e.target.checked; state.page=1; render(); });
+    document.getElementById('reset').addEventListener('click', ()=>{ document.getElementById('q').value=''; state.q=''; state.field='all'; document.getElementById('searchField').value='all'; state.unread=state.star=state.attach=false; document.getElementById('onlyUnread').checked=false; document.getElementById('onlyStar').checked=false; document.getElementById('onlyAttach').checked=false; state.sort='date-desc'; document.getElementById('sort').value='date-desc'; state.page=1; render(); });
+    document.getElementById('checkAll').addEventListener('change', (e)=>{ document.querySelectorAll('.rowchk').forEach(chk=>{ chk.checked=e.target.checked;}); });
+
+    // 리스트 내 별 토글
+    listEl.addEventListener('click', (e)=>{
+      const starBtn = e.target.closest('button.star');
+      if(starBtn){ const id = starBtn.getAttribute('data-star'); const rows=loadData(); const i=rows.findIndex(x=>x.id===id); if(i>=0){ rows[i].starred=!rows[i].starred; saveData(rows); render(); } }
+    });
+
+    render();
+    refreshFolderCounts();
+  </script>
+</body>
+</html>
+
+
+

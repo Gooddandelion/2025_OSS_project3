@@ -1,0 +1,121 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>N‑Mail | 수정</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="my.css">
+  <script src="shared.js"></script>
+  <style>.is-invalid + .invalid-feedback{display:block}</style>
+</head>
+<body>
+  <div class="d-flex" style="min-height:100vh;">
+    <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 260px;">
+      <div class="d-flex align-items-center mb-3 brand">
+        <p style="color: var(--nv); font-size: 30px; font-weight: bolder; padding-right: 5px;">N </p>
+        <p style="font-size: 20px; font-weight:lighter;"> 메일</p>
+      </div>
+      <a href="index.html" class="btn btn-outline-secondary mb-3">목록</a>
+    </div>
+
+    <main class="flex-grow-1 p-3 container">
+      <h3 class="mb-3">메일 수정 (데모: 저장 안 함)</h3>
+      <div id="alertBox"></div>
+      <form id="f" class="card p-3" novalidate></form>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const id = getParam('id');
+    const item = isValidId(id) ? (findById(id)||null) : null;
+    const f = document.getElementById('f');
+    const alertBox = document.getElementById('alertBox');
+    function showAlert(type, html){ alertBox.innerHTML = `<div class=\"alert alert-${type} alert-dismissible\" role=\"alert\">${html}<button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\"></button></div>`; }
+    const val=(v)=>esc(v??'');
+
+    f.innerHTML = item ? `
+      <div class=\"row g-3\">
+        <div class=\"col-md-6\">
+          <label class=\"form-label\">보낸사람 *</label>
+          <input name=\"from\" class=\"form-control\" required value=\"${val(item.from)}\">
+          <div class=\"invalid-feedback\">보낸사람 2~50자.</div>
+        </div>
+        <div class=\"col-md-6\">
+          <label class=\"form-label\">폴더 *</label>
+          <select name=\"folder\" class=\"form-select\" required>
+            ${['받은편지함','중요','보낸편지함','임시보관','스팸메일함','휴지통'].map(op=>`<option ${op===item.folder?'selected':''}>${esc(op)}</option>`).join('')}
+          </select>
+          <div class=\"invalid-feedback\">폴더를 선택하세요.</div>
+        </div>
+        <div class=\"col-12\">
+          <label class=\"form-label\">제목 *</label>
+          <input name=\"subject\" class=\"form-control\" required value=\"${val(item.subject)}\">
+          <div class=\"invalid-feedback\">제목 2~100자.</div>
+        </div>
+        <div class=\"col-12\">
+          <label class=\"form-label\">본문 미리보기 *</label>
+          <textarea name=\"snippet\" class=\"form-control\" rows=\"6\" required>${val(item.snippet)}</textarea>
+          <div class=\"form-text\">최소 10자, 최대 3000자.</div>
+          <div class=\"invalid-feedback\">본문 10~3000자.</div>
+        </div>
+        <div class=\"col-md-3 form-check ms-2\">
+          <input class=\"form-check-input\" type=\"checkbox\" name=\"unread\" id=\"unread\" ${item.unread?'checked':''}>
+          <label class=\"form-check-label\" for=\"unread\">읽지않음</label>
+        </div>
+        <div class=\"col-md-3 form-check ms-2\">
+          <input class=\"form-check-input\" type=\"checkbox\" name=\"starred\" id=\"starred\" ${item.starred?'checked':''}>
+          <label class=\"form-check-label\" for=\"starred\">중요표시</label>
+        </div>
+        <div class=\"col-md-3 form-check ms-2\">
+          <input class=\"form-check-input\" type=\"checkbox\" name=\"hasAttachment\" id=\"attach\" ${item.hasAttachment?'checked':''}>
+          <label class=\"form-check-label\" for=\"attach\">첨부 있음</label>
+        </div>
+        <div class=\"col-12\">
+          <label class=\"form-label\">라벨(쉼표 구분, 최대 5개)</label>
+          <input name=\"labels\" class=\"form-control\" value=\"${esc((item.labels||[]).join(','))}\">
+          <div class=\"invalid-feedback\">라벨은 최대 5개, 각 1~20자.</div>
+        </div>
+      </div>
+      <div class=\"mt-3 d-flex gap-2\">
+        <button class=\"btn btn-primary\" type=\"submit\">수정</button>
+        <a class=\"btn btn-outline-secondary\" href=\"view.html?id=${encodeURIComponent(item.id)}\">취소</a>
+      </div>
+    ` : '<div>잘못된 접근이거나 항목이 없습니다. <a class=\"link-primary\" href=\"index.html\">목록으로</a></div>';
+
+    function setInvalid(input, invalid){ input.classList.toggle('is-invalid', invalid); input.classList.toggle('is-valid', !invalid); }
+
+    f.addEventListener('submit', (e)=>{
+      e.preventDefault(); if(!item) return;
+      const fd = new FormData(f);
+      const from=(fd.get('from')||'').trim();
+      const subject=(fd.get('subject')||'').trim();
+      const snippet=(fd.get('snippet')||'').trim();
+      const folder=(fd.get('folder')||'').trim();
+      const labelsStr=(fd.get('labels')||'').trim();
+      const labels=labelsStr?labelsStr.split(',').map(s=>s.trim()).filter(Boolean):[];
+
+      let ok=true; const errs=[];
+      if(!(from.length>=2 && from.length<=50)){ ok=false; errs.push('보낸사람 2~50자'); }
+      if(!(subject.length>=2 && subject.length<=100)){ ok=false; errs.push('제목 2~100자'); }
+      if(!(snippet.length>=10 && snippet.length<=3000)){ ok=false; errs.push('본문 10~3000자'); }
+      if(!folder){ ok=false; errs.push('폴더 선택'); }
+      if(labels.length>5 || labels.some(s=>s.length===0 || s.length>20)){ ok=false; errs.push('라벨 5개 이하, 각 1~20자'); }
+
+      setInvalid(f.elements.from, !(from.length>=2 && from.length<=50));
+      setInvalid(f.elements.subject, !(subject.length>=2 && subject.length<=100));
+      setInvalid(f.elements.snippet, !(snippet.length>=10 && snippet.length<=3000));
+      setInvalid(f.elements.folder, !folder);
+      setInvalid(f.elements.labels, (labels.length>5 || labels.some(s=>s.length===0 || s.length>20)) );
+
+      if(!ok){ showAlert('danger', `<strong>유효성 검사 실패</strong><br>${errs.map(esc).join('<br>')}`); return; }
+
+      if(confirm('게시물을 수정할까요?')){
+        // 데모: 실제 저장하지 않음
+        showAlert('success', '<strong>검증 성공</strong> — 데모 모드(저장하지 않음).');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+:root {
+    --nv: #03c75a;
+    --line: #e5e7eb;
+    --muted: #6b7280;
+}
+
+body {
+    background: #f5f7fb;
+}
+
+/* 사이드바: 네이버 그린 악센트 */
+.sidebar {
+    background: #fff !important;
+    border-right: 1px solid var(--line);
+}
+
+.sidebar .brand {
+    color: #111;
+    font-weight: 700;
+}
+
+.sidebar a.active {
+    background: rgba(3, 199, 90, .12);
+    color: #0a7f43 !important;
+    border-radius: .5rem;
+}
+
+.sidebar .count {
+    background: #eef2f7;
+    border-radius: 999px;
+    padding: 0 8px;
+    font-size: .75rem;
+    margin-left: 6px;
+    color: #374151;
+}
+
+.sidebar .unread {
+    background: var(--nv);
+    color: #fff;
+}
+
+/* 상단 툴바 */
+.toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.toolbar .search-wrap {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+/* 메일 리스트 */
+.nm-list {
+    border: 1px solid var(--line);
+    border-radius: .75rem;
+    overflow: hidden;
+    background: #fff;
+}
+
+.nm-head,
+.nm-row {
+    display: grid;
+    grid-template-columns: 48px 48px 220px auto 160px;
+    gap: 8px;
+    align-items: center;
+}
+
+.nm-head {
+    padding: 10px 12px;
+    color: var(--muted);
+    font-size: .9rem;
+    border-bottom: 1px solid var(--line);
+    background: #f8fafc;
+}
+
+.nm-row {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.nm-row:last-child {
+    border-bottom: none;
+}
+
+.nm-row.unread {
+    background: #f8fffa;
+    font-weight: 600;
+}
+
+.nm-from,
+.nm-subject,
+.nm-date {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nm-snippet {
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 6px;
+}
+
+/* 중요(별) 버튼 */
+.star {
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: #c9ccd0;
+}
+
+.star.active {
+    color: #f6c343;
+}
+
+/* 라벨/뱃지 */
+.badge-tag {
+    border: 1px solid var(--line);
+    background: #f9fafb;
+    border-radius: .5rem;
+    padding: 2px 6px;
+    font-size: .75rem;
+    margin-right: 6px;
+}
+
+/* 반응형: 모바일에서는 컬럼 축소 */
+@media (max-width: 768px) {
+    .nm-head {
+        display: none;
+    }
+
+    .nm-row {
+        grid-template-columns: 36px 36px 1fr;
+        grid-auto-rows: auto;
+        gap: 6px;
+    }
+
+    .nm-from {
+        grid-column: 3;
+        order: 1;
+        font-size: .9rem;
+        color: #111;
+    }
+
+    .nm-subject {
+        grid-column: 3;
+        order: 2;
+    }
+
+    .nm-date {
+        grid-column: 3;
+        order: 3;
+        color: var(--muted);
+        font-size: .85rem;
+    }
+}
